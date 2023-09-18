@@ -1,6 +1,8 @@
 import asyncio
+import traceback
 import urllib
 
+import pyppeteer
 # from py12306.config import UserType
 from pyppeteer import launch
 
@@ -122,29 +124,41 @@ class Browser:
             await page.focus('#J-login')
             await page.click('#J-login')
 
-            slide_btn = await page.waitForSelector('#nc_1_n1z', timeout=30000)
-            rect = await slide_btn.boundingBox()
-            pos = DomBounding(rect)
-            pos.x += pos.width / 2
-            pos.y += pos.height / 2
-            await page.mouse.move(pos.x, pos.y)
-            await page.mouse.down()
-            await page.mouse.move(pos.x + pos.width * 10, pos.y, steps=30)
-            await page.mouse.up()
-            await page.evaluate(
-            'async () => {let i = 3 * 10; while (!csessionid && i >= 0) await new Promise(resolve => setTimeout(resolve, 100), i--);}')
-            await page.evaluate('JSON.stringify({session_id: csessionid, sig: sig})')
+            try:
+                slide_btn = await page.waitForSelector('#nc_1_n1z', timeout=5000)
+                rect = await slide_btn.boundingBox()
+                pos = DomBounding(rect)
+                pos.x += pos.width / 2
+                pos.y += pos.height / 2
+                await page.mouse.move(pos.x, pos.y)
+                await page.mouse.down()
+                await page.mouse.move(pos.x + pos.width * 10, pos.y, steps=30)
+                await page.mouse.up()
+                await page.evaluate(
+                    'async () => {let i = 3 * 10; while (!csessionid && i >= 0) await new Promise(resolve => setTimeout(resolve, 100), i--);}')
+                await page.evaluate('JSON.stringify({session_id: csessionid, sig: sig})')
+                # 继续处理 slide_btn 元素
+            except Exception as e:
+                print(e)
+                # 处理元素未找到的情况
+                print("未找到元素 #nc_1_n1z")
+                # 进行相应的错误处理
+
             self.cookies = await page.cookies()
             OrderLog.add_quick_log('滑动验证码识别成功').flush()
         except Exception as e:
+            print(e)
+            traceback.print_exc()
             OrderLog.add_quick_log('滑动验证码识别失败').flush()
         try:
             await page.close()
-        except:
+        except Exception as e:
+            print(e)
             pass
         try:
             await browser.close()
-        except:
+        except Exception as e:
+            print(e)
             pass
         return self.cookies, self.post_data
 

@@ -36,12 +36,12 @@ class App:
     @classmethod
     def run(cls):
         self = cls()
-        self.register_sign()
+        self.register_sign()  # 程序退出信号处理
         self.start()
 
     def start(self):
         Config().run()
-        self.init_class()
+        self.init_class()   # 集群初始化
 
     @classmethod
     def did_start(cls):
